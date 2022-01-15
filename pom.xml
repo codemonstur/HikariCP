@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project>
    <modelVersion>4.0.0</modelVersion>
 
    <properties>
@@ -23,8 +23,6 @@
       <pax.exam.version>4.13.1</pax.exam.version>
       <pax.url.version>2.5.4</pax.url.version>
       <postgresql.version>42.2.20</postgresql.version>
-      <log4j.version>[2.17.1,)</log4j.version>
-      <slf4j.version>1.7.30</slf4j.version>
       <commons.csv.version>1.5</commons.csv.version>
       <h2.version>[2.0.206,)</h2.version>
       <junit.version>4.13.1</junit.version>
@@ -74,23 +72,6 @@
    </parent>
 
    <dependencies>
-      <dependency>
-         <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-api</artifactId>
-         <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.logging.log4j</groupId>
-         <artifactId>log4j-api</artifactId>
-         <version>${log4j.version}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.logging.log4j</groupId>
-         <artifactId>log4j-core</artifactId>
-         <version>${log4j.version}</version>
-         <scope>test</scope>
-      </dependency>
       <dependency>
          <groupId>org.testcontainers</groupId>
          <artifactId>postgresql</artifactId>
@@ -162,6 +143,12 @@
          <version>${metrics.version}</version>
          <scope>provided</scope>
          <optional>true</optional>
+         <exclusions>
+            <exclusion>
+               <groupId>org.slf4j</groupId>
+               <artifactId>slf4j-api</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>io.dropwizard.metrics</groupId>
@@ -169,6 +156,12 @@
          <version>${metrics.version}</version>
          <scope>provided</scope>
          <optional>true</optional>
+         <exclusions>
+            <exclusion>
+               <groupId>org.slf4j</groupId>
+               <artifactId>slf4j-api</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>io.prometheus</groupId>
@@ -566,14 +559,7 @@
             <slf4j.version>2.0.0-alpha1</slf4j.version>
             <sureFireForks11>true</sureFireForks11>
          </properties>
-         <dependencies>
-            <dependency>
-               <groupId>org.apache.logging.log4j</groupId>
-               <artifactId>log4j-slf4j18-impl</artifactId>
-               <version>${log4j.version}</version>
-               <scope>test</scope>
-            </dependency>
-         </dependencies>
+
          <build>
             <plugins>
                <plugin>

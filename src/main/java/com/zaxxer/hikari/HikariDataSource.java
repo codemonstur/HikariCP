@@ -19,8 +19,6 @@ package com.zaxxer.hikari;
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory;
 import com.zaxxer.hikari.pool.HikariPool;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.Closeable;
@@ -39,8 +37,6 @@ import static com.zaxxer.hikari.pool.HikariPool.POOL_NORMAL;
  */
 public class HikariDataSource extends HikariConfig implements DataSource, Closeable
 {
-   private static final Logger LOGGER = LoggerFactory.getLogger(HikariDataSource.class);
-
    private final AtomicBoolean isShutdown = new AtomicBoolean();
 
    private final HikariPool fastPathPool;
@@ -77,9 +73,7 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
       configuration.validate();
       configuration.copyStateTo(this);
 
-      LOGGER.info("{} - Starting...", configuration.getPoolName());
       pool = fastPathPool = new HikariPool(this);
-      LOGGER.info("{} - Start completed.", configuration.getPoolName());
 
       this.seal();
    }
@@ -107,7 +101,6 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
             result = pool;
             if (result == null) {
                validate();
-               LOGGER.info("{} - Starting...", getPoolName());
                try {
                   pool = result = new HikariPool(this);
                   this.seal();
@@ -120,7 +113,6 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
                      throw pie;
                   }
                }
-               LOGGER.info("{} - Start completed.", getPoolName());
             }
          }
       }
@@ -347,12 +339,9 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
       var p = pool;
       if (p != null) {
          try {
-            LOGGER.info("{} - Shutdown initiated...", getPoolName());
             p.shutdown();
-            LOGGER.info("{} - Shutdown completed.", getPoolName());
          }
          catch (InterruptedException e) {
-            LOGGER.warn("{} - Interrupted during closing", getPoolName(), e);
             Thread.currentThread().interrupt();
          }
       }

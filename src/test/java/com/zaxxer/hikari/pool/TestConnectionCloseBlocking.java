@@ -14,10 +14,16 @@
  * limitations under the License.
 */
 
-/**
- *
- */
 package com.zaxxer.hikari.pool;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.mocks.MockDataSource;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
 import static com.zaxxer.hikari.util.ClockSource.currentTime;
@@ -28,16 +34,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.mocks.MockDataSource;
 
 /**
  * Test for cases when db network connectivity goes down and close is called on existing connections. By default Hikari
@@ -59,17 +55,17 @@ public class TestConnectionCloseBlocking {
       long start = currentTime();
       try (HikariDataSource ds = new HikariDataSource(config);
             Connection connection = ds.getConnection()) {
-            
+
             connection.close();
-   
+
             // Hikari only checks for validity for connections with lastAccess > 1000 ms so we sleep for 1001 ms to force
             // Hikari to do a connection validation which will fail and will trigger the connection to be closed
             quietlySleep(1100L);
-   
+
             shouldFail = true;
-   
+
             // on physical connection close we sleep 2 seconds
-            try (Connection connection2 = ds.getConnection()) {   
+            try (Connection connection2 = ds.getConnection()) {
                assertTrue("Waited longer than timeout", (elapsedMillis(start) < config.getConnectionTimeout()));
             }
       } catch (SQLException e) {

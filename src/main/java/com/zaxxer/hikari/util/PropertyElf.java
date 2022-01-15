@@ -17,7 +17,6 @@
 package com.zaxxer.hikari.util;
 
 import com.zaxxer.hikari.HikariConfig;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -111,8 +110,6 @@ public final class PropertyElf
 
    private static void setProperty(final Object target, final String propName, final Object propValue, final List<Method> methods)
    {
-      final var logger = LoggerFactory.getLogger(PropertyElf.class);
-
       // use the english locale to avoid the infamous turkish locale bug
       var methodName = "set" + propName.substring(0, 1).toUpperCase(Locale.ENGLISH) + propName.substring(1);
       var writeMethod = methods.stream().filter(m -> m.getName().equals(methodName) && m.getParameterCount() == 1).findFirst().orElse(null);
@@ -123,7 +120,6 @@ public final class PropertyElf
       }
 
       if (writeMethod == null) {
-         logger.error("Property {} does not exist on target {}", propName, target.getClass());
          throw new RuntimeException(String.format("Property %s does not exist on target %s", propName, target.getClass()));
       }
 
@@ -146,17 +142,14 @@ public final class PropertyElf
          }
          else {
             try {
-               logger.debug("Try to create a new instance of \"{}\"", propValue);
                writeMethod.invoke(target, Class.forName(propValue.toString()).getDeclaredConstructor().newInstance());
             }
             catch (InstantiationException | ClassNotFoundException e) {
-               logger.debug("Class \"{}\" not found or could not instantiate it (Default constructor)", propValue);
                writeMethod.invoke(target, propValue);
             }
          }
       }
       catch (Exception e) {
-         logger.error("Failed to set property {} on target {}", propName, target.getClass(), e);
          throw new RuntimeException(e);
       }
    }

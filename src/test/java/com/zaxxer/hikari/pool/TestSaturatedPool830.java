@@ -16,14 +16,13 @@
 
 package com.zaxxer.hikari.pool;
 
-import static com.zaxxer.hikari.pool.TestElf.getPool;
-import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
-import static com.zaxxer.hikari.pool.TestElf.setSlf4jLogLevel;
-import static com.zaxxer.hikari.util.ClockSource.currentTime;
-import static com.zaxxer.hikari.util.ClockSource.elapsedMillis;
-import static com.zaxxer.hikari.util.UtilityElf.quietlySleep;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.mocks.StubConnection;
+import com.zaxxer.hikari.mocks.StubStatement;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -33,15 +32,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.logging.log4j.Level;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.mocks.StubConnection;
-import com.zaxxer.hikari.mocks.StubStatement;
+import static com.zaxxer.hikari.pool.TestElf.getPool;
+import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
+import static com.zaxxer.hikari.util.ClockSource.currentTime;
+import static com.zaxxer.hikari.util.ClockSource.elapsedMillis;
+import static com.zaxxer.hikari.util.UtilityElf.quietlySleep;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Brett Wooldridge
@@ -62,7 +59,6 @@ public class TestSaturatedPool830
 
       StubConnection.slowCreate = true;
       StubStatement.setSimulatedQueryTime(1000);
-      setSlf4jLogLevel(HikariPool.class, Level.DEBUG);
       System.setProperty("com.zaxxer.hikari.housekeeping.periodMs", "5000");
 
       final long start = currentTime();
@@ -147,7 +143,6 @@ outer:   while (true) {
          StubStatement.setSimulatedQueryTime(0);
          StubConnection.slowCreate = false;
          System.clearProperty("com.zaxxer.hikari.housekeeping.periodMs");
-         setSlf4jLogLevel(HikariPool.class, Level.INFO);
       }
    }
 }

@@ -24,7 +24,6 @@ import com.zaxxer.hikari.mocks.StubConnection;
 import com.zaxxer.hikari.mocks.StubDataSource;
 import com.zaxxer.hikari.mocks.StubStatement;
 import com.zaxxer.hikari.pool.HikariPool.PoolInitializationException;
-import org.apache.logging.log4j.Level;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,17 +46,12 @@ public class TestConnections
    @Before
    public void before()
    {
-      setSlf4jTargetStream(HikariPool.class, System.err);
-      setSlf4jLogLevel(HikariPool.class, Level.DEBUG);
-      setSlf4jLogLevel(PoolBase.class, Level.DEBUG);
    }
 
    @After
    public void after()
    {
       System.getProperties().remove("com.zaxxer.hikari.housekeeping.periodMs");
-      setSlf4jLogLevel(HikariPool.class, Level.WARN);
-      setSlf4jLogLevel(PoolBase.class, Level.WARN);
    }
 
    @Test

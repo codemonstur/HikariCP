@@ -17,8 +17,6 @@
 package com.zaxxer.hikari.pool;
 
 import com.zaxxer.hikari.util.FastList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -43,7 +41,6 @@ public abstract class ProxyConnection implements Connection
    static final int DIRTY_BIT_NETTIMEOUT = 0b010000;
    static final int DIRTY_BIT_SCHEMA     = 0b100000;
 
-   private static final Logger LOGGER;
    private static final Set<String> ERROR_STATES;
    private static final Set<Integer> ERROR_CODES;
 
@@ -66,8 +63,6 @@ public abstract class ProxyConnection implements Connection
 
    // static initializer
    static {
-      LOGGER = LoggerFactory.getLogger(ProxyConnection.class);
-
       ERROR_STATES = new HashSet<>();
       ERROR_STATES.add("0A000"); // FEATURE UNSUPPORTED
       ERROR_STATES.add("57P01"); // ADMIN SHUTDOWN
@@ -173,9 +168,6 @@ public abstract class ProxyConnection implements Connection
       }
 
       if (evict) {
-         var exception = (nse != null) ? nse : sqle;
-         LOGGER.warn("{} - Connection {} marked as broken because of SQLSTATE({}), ErrorCode({})",
-            poolEntry.getPoolName(), delegate, exception.getSQLState(), exception.getErrorCode(), exception);
          leakTask.cancel();
          poolEntry.evict("(connection is broken)");
          delegate = ClosedConnection.CLOSED_CONNECTION;
@@ -218,8 +210,6 @@ public abstract class ProxyConnection implements Connection
                // automatic resource cleanup
             }
             catch (SQLException e) {
-               LOGGER.warn("{} - Connection {} marked as broken because of an exception closing open statements during Connection.close()",
-                           poolEntry.getPoolName(), delegate);
                leakTask.cancel();
                poolEntry.evict("(exception closing Statements during Connection.close())");
                delegate = ClosedConnection.CLOSED_CONNECTION;
@@ -247,7 +237,6 @@ public abstract class ProxyConnection implements Connection
          try {
             if (isCommitStateDirty && !isAutoCommit) {
                delegate.rollback();
-               LOGGER.debug("{} - Executed rollback on connection {} due to dirty commit state on close().", poolEntry.getPoolName(), delegate);
             }
 
             if (dirtyBits != 0) {

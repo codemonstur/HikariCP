@@ -19,19 +19,9 @@ package com.zaxxer.hikari.pool;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.util.ConcurrentBag;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.config.Property;
-import org.apache.logging.log4j.core.layout.CsvLogEventLayout;
-import org.apache.logging.slf4j.Log4jLogger;
-import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.sql.Connection;
@@ -117,43 +107,6 @@ public final class TestElf
       }
    }
 
-   static void setSlf4jTargetStream(final Class<?> clazz, final PrintStream stream)
-   {
-      try {
-         Log4jLogger log4Jlogger = (Log4jLogger) LoggerFactory.getLogger(clazz);
-
-         Field field = clazz.getClassLoader().loadClass("org.apache.logging.slf4j.Log4jLogger").getDeclaredField("logger");
-         field.setAccessible(true);
-
-         Logger logger = (Logger) field.get(log4Jlogger);
-         if (logger.getAppenders().containsKey("string")) {
-            Appender appender = logger.getAppenders().get("string");
-            logger.removeAppender(appender);
-         }
-
-         logger.addAppender(new StringAppender("string", stream));
-      }
-      catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-   }
-
-   static void setSlf4jLogLevel(final Class<?> clazz, final Level logLevel)
-   {
-      try {
-         Log4jLogger log4Jlogger = (Log4jLogger) LoggerFactory.getLogger(clazz);
-
-         Field field = clazz.getClassLoader().loadClass("org.apache.logging.slf4j.Log4jLogger").getDeclaredField("logger");
-         field.setAccessible(true);
-
-         Logger logger = (Logger) field.get(log4Jlogger);
-         logger.setLevel(logLevel);
-      }
-      catch (Exception e) {
-         throw new RuntimeException(e);
-      }
-   }
-
    public static HikariConfig newHikariConfig()
    {
       final StackTraceElement callerStackTrace = Thread.currentThread().getStackTrace()[2];
@@ -180,23 +133,6 @@ public final class TestElf
       final HikariDataSource ds = new HikariDataSource();
       ds.setPoolName(poolName);
       return ds;
-   }
-
-   private static class StringAppender extends AbstractAppender
-   {
-      private PrintStream stream;
-
-      StringAppender(final String name, final PrintStream stream)
-      {
-         super(name, null, CsvLogEventLayout.createDefaultLayout(), true, Property.EMPTY_ARRAY);
-         this.stream = stream;
-      }
-
-      @Override
-      public void append(final LogEvent event)
-      {
-         stream.println(event.getMessage().getFormattedMessage());
-      }
    }
 
    public static class FauxWebClassLoader extends ClassLoader

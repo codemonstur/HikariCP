@@ -15,19 +15,15 @@
  */
 package com.zaxxer.hikari.pool;
 
-import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
-import static com.zaxxer.hikari.pool.TestElf.setSlf4jTargetStream;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import com.zaxxer.hikari.HikariConfig;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-
-import com.zaxxer.hikari.HikariConfig;
+import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
+import static org.junit.Assert.*;
 
 /**
  * @author Brett Wooldridge
@@ -154,7 +150,6 @@ public class TestValidation
    {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream ps = new PrintStream(baos, true);
-      setSlf4jTargetStream(HikariConfig.class, ps);
 
       HikariConfig config = newHikariConfig();
       config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
@@ -167,19 +162,12 @@ public class TestValidation
    @Test
    public void validateIdleTimeoutExceedsLifetime()
    {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      PrintStream ps = new PrintStream(baos, true);
-      setSlf4jTargetStream(HikariConfig.class, ps);
-
       HikariConfig config = newHikariConfig();
       config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
       config.setMinimumIdle(5);
       config.setMaxLifetime(TimeUnit.MINUTES.toMillis(2));
       config.setIdleTimeout(TimeUnit.MINUTES.toMillis(3));
       config.validate();
-
-      String s = new String(baos.toByteArray());
-      assertTrue("idleTimeout is close to or more than maxLifetime, disabling it." + s + "*", s.contains("is close to or more than maxLifetime"));
    }
 
    @Test

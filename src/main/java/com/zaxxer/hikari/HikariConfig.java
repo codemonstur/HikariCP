@@ -19,8 +19,6 @@ package com.zaxxer.hikari;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory;
 import com.zaxxer.hikari.util.PropertyElf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -45,8 +43,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @SuppressWarnings({"SameParameterValue", "unused"})
 public class HikariConfig implements HikariConfigMXBean
 {
-   private static final Logger LOGGER = LoggerFactory.getLogger(HikariConfig.class);
-
    private static final char[] ID_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
    private static final long CONNECTION_TIMEOUT = SECONDS.toMillis(30);
    private static final long VALIDATION_TIMEOUT = SECONDS.toMillis(5);
@@ -478,10 +474,8 @@ public class HikariConfig implements HikariConfigMXBean
       try {
          if (driverClass == null) {
             driverClass = this.getClass().getClassLoader().loadClass(driverClassName);
-            LOGGER.debug("Driver class {} found in the HikariConfig class classloader {}", driverClassName, this.getClass().getClassLoader());
          }
-      } catch (ClassNotFoundException e) {
-         LOGGER.error("Failed to load driver class {} from HikariConfig class classloader {}", driverClassName, this.getClass().getClassLoader());
+      } catch (ClassNotFoundException ignored) {
       }
 
       if (driverClass == null) {
@@ -876,10 +870,8 @@ public class HikariConfig implements HikariConfigMXBean
       try {
          if (overrideClass == null) {
             overrideClass = this.getClass().getClassLoader().loadClass(exceptionOverrideClassName);
-            LOGGER.debug("SQLExceptionOverride class {} found in the HikariConfig class classloader {}", exceptionOverrideClassName, this.getClass().getClassLoader());
          }
-      } catch (ClassNotFoundException e) {
-         LOGGER.error("Failed to load SQLExceptionOverride class {} from HikariConfig class classloader {}", exceptionOverrideClassName, this.getClass().getClassLoader());
+      } catch (ClassNotFoundException ignored) {
       }
 
       if (overrideClass == null) {
@@ -965,11 +957,8 @@ public class HikariConfig implements HikariConfigMXBean
       if (threadContextClassLoader != null) {
          try {
             final var driverClass = threadContextClassLoader.loadClass(driverClassName);
-            LOGGER.debug("Driver class {} found in Thread context class loader {}", driverClassName, threadContextClassLoader);
             return driverClass;
-         } catch (ClassNotFoundException e) {
-            LOGGER.debug("Driver class {} not found in Thread context class loader {}, trying classloader {}",
-               driverClassName, threadContextClassLoader, this.getClass().getClassLoader());
+         } catch (ClassNotFoundException ignored) {
          }
       }
 
@@ -998,74 +987,55 @@ public class HikariConfig implements HikariConfigMXBean
       jdbcUrl = getNullIfEmpty(jdbcUrl);
 
       // Check Data Source Options
-      if (dataSource != null) {
-         if (dataSourceClassName != null) {
-            LOGGER.warn("{} - using dataSource and ignoring dataSourceClassName.", poolName);
-         }
-      }
-      else if (dataSourceClassName != null) {
+
+      if (dataSourceClassName != null) {
          if (driverClassName != null) {
-            LOGGER.error("{} - cannot use driverClassName and dataSourceClassName together.", poolName);
             // NOTE: This exception text is referenced by a Spring Boot FailureAnalyzer, it should not be
             // changed without first notifying the Spring Boot developers.
             throw new IllegalStateException("cannot use driverClassName and dataSourceClassName together.");
-         }
-         else if (jdbcUrl != null) {
-            LOGGER.warn("{} - using dataSourceClassName and ignoring jdbcUrl.", poolName);
          }
       }
       else if (jdbcUrl != null || dataSourceJndiName != null) {
          // ok
       }
       else if (driverClassName != null) {
-         LOGGER.error("{} - jdbcUrl is required with driverClassName.", poolName);
          throw new IllegalArgumentException("jdbcUrl is required with driverClassName.");
       }
       else {
-         LOGGER.error("{} - dataSource or dataSourceClassName or jdbcUrl is required.", poolName);
          throw new IllegalArgumentException("dataSource or dataSourceClassName or jdbcUrl is required.");
       }
 
       validateNumerics();
 
-      if (LOGGER.isDebugEnabled() || unitTest) {
-         logConfiguration();
-      }
    }
 
    private void validateNumerics()
    {
       if (maxLifetime != 0 && maxLifetime < SECONDS.toMillis(30)) {
-         LOGGER.warn("{} - maxLifetime is less than 30000ms, setting to default {}ms.", poolName, MAX_LIFETIME);
          maxLifetime = MAX_LIFETIME;
       }
 
       // keepalive time must larger then 30 seconds
       if (keepaliveTime != 0 && keepaliveTime < SECONDS.toMillis(30)) {
-         LOGGER.warn("{} - keepaliveTime is less than 30000ms, disabling it.", poolName);
          keepaliveTime = DEFAULT_KEEPALIVE_TIME;
       }
 
       // keepalive time must be less than maxLifetime (if maxLifetime is enabled)
       if (keepaliveTime != 0 && maxLifetime != 0 && keepaliveTime >= maxLifetime) {
-         LOGGER.warn("{} - keepaliveTime is greater than or equal to maxLifetime, disabling it.", poolName);
          keepaliveTime = DEFAULT_KEEPALIVE_TIME;
       }
 
       if (leakDetectionThreshold > 0 && !unitTest) {
          if (leakDetectionThreshold < SECONDS.toMillis(2) || (leakDetectionThreshold > maxLifetime && maxLifetime > 0)) {
-            LOGGER.warn("{} - leakDetectionThreshold is less than 2000ms or more than maxLifetime, disabling it.", poolName);
             leakDetectionThreshold = 0;
          }
       }
 
       if (connectionTimeout < SOFT_TIMEOUT_FLOOR) {
-         LOGGER.warn("{} - connectionTimeout is less than {}ms, setting to {}ms.", poolName, SOFT_TIMEOUT_FLOOR, CONNECTION_TIMEOUT);
          connectionTimeout = CONNECTION_TIMEOUT;
       }
 
       if (validationTimeout < SOFT_TIMEOUT_FLOOR) {
-         LOGGER.warn("{} - validationTimeout is less than {}ms, setting to {}ms.", poolName, SOFT_TIMEOUT_FLOOR, VALIDATION_TIMEOUT);
          validationTimeout = VALIDATION_TIMEOUT;
       }
 
@@ -1078,16 +1048,12 @@ public class HikariConfig implements HikariConfigMXBean
       }
 
       if (idleTimeout + SECONDS.toMillis(1) > maxLifetime && maxLifetime > 0 && minIdle < maxPoolSize) {
-         LOGGER.warn("{} - idleTimeout is close to or more than maxLifetime, disabling it.", poolName);
          idleTimeout = 0;
       }
       else if (idleTimeout != 0 && idleTimeout < SECONDS.toMillis(10) && minIdle < maxPoolSize) {
-         LOGGER.warn("{} - idleTimeout is less than 10000ms, setting to default {}ms.", poolName, IDLE_TIMEOUT);
          idleTimeout = IDLE_TIMEOUT;
       }
-      else  if (idleTimeout != IDLE_TIMEOUT && idleTimeout != 0 && minIdle == maxPoolSize) {
-         LOGGER.warn("{} - idleTimeout has been set but has no effect because the pool is operating as a fixed size pool.", poolName);
-      }
+
    }
 
    private void checkIfSealed()
@@ -1097,7 +1063,6 @@ public class HikariConfig implements HikariConfigMXBean
 
    private void logConfiguration()
    {
-      LOGGER.debug("{} - configuration:", poolName);
       final var propertyNames = new TreeSet<>(PropertyElf.getPropertyNames(HikariConfig.class));
       for (var prop : propertyNames) {
          try {
@@ -1129,7 +1094,6 @@ public class HikariConfig implements HikariConfigMXBean
             else if (value == null) {
                value = "none";
             }
-            LOGGER.debug("{}{}", (prop + "................................................").substring(0, 32), value);
          }
          catch (Exception e) {
             // continue
@@ -1174,8 +1138,6 @@ public class HikariConfig implements HikariConfigMXBean
          for (var i = 0; i < 4; i++) {
             buf.append(ID_CHARACTERS[random.nextInt(62)]);
          }
-
-         LOGGER.info("assigned random pool name '{}' (security manager prevented access to system properties)", buf);
 
          return buf.toString();
       }

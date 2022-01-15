@@ -16,8 +16,6 @@
 package com.zaxxer.hikari.util;
 
 import com.zaxxer.hikari.util.ConcurrentBag.IConcurrentBagEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -58,8 +56,6 @@ import static java.util.concurrent.locks.LockSupport.parkNanos;
  */
 public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseable
 {
-   private static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentBag.class);
-
    private final CopyOnWriteArrayList<T> sharedList;
    private final boolean weakThreadLocals;
 
@@ -202,7 +198,6 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
    public void add(final T bagEntry)
    {
       if (closed) {
-         LOGGER.info("ConcurrentBag has been closed, ignoring add()");
          throw new IllegalStateException("ConcurrentBag has been closed, ignoring add()");
       }
 
@@ -226,14 +221,10 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
    public boolean remove(final T bagEntry)
    {
       if (!bagEntry.compareAndSet(STATE_IN_USE, STATE_REMOVED) && !bagEntry.compareAndSet(STATE_RESERVED, STATE_REMOVED) && !closed) {
-         LOGGER.warn("Attempt to remove an object from the bag that was not borrowed or reserved: {}", bagEntry);
          return false;
       }
 
       final boolean removed = sharedList.remove(bagEntry);
-      if (!removed && !closed) {
-         LOGGER.warn("Attempt to remove an object from the bag that does not exist: {}", bagEntry);
-      }
 
       threadList.get().remove(bagEntry);
 
@@ -311,9 +302,6 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
             Thread.yield();
          }
       }
-      else {
-         LOGGER.warn("Attempt to relinquish an object to the bag that was not reserved: {}", bagEntry);
-      }
    }
 
    /**
@@ -366,10 +354,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
       return sharedList.size();
    }
 
-   public void dumpState()
-   {
-      sharedList.forEach(entry -> LOGGER.info(entry.toString()));
-   }
+   public void dumpState() {}
 
    /**
     * Determine whether to use WeakReferences based on whether there is a

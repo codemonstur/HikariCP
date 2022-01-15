@@ -16,9 +16,10 @@
 
 package com.zaxxer.hikari.pool;
 
-import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
-import static com.zaxxer.hikari.pool.TestElf.setSlf4jLogLevel;
-import static org.junit.Assert.fail;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.junit.After;
+import org.junit.Test;
 
 import java.sql.Connection;
 import java.util.concurrent.Callable;
@@ -27,14 +28,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.logging.log4j.Level;
-import org.junit.After;
-import org.junit.Test;
-import org.slf4j.LoggerFactory;
-
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.util.ConcurrentBag;
+import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
+import static org.junit.Assert.fail;
 
 /**
  * @author Matthew Tambara (matthew.tambara@liferay.com)
@@ -53,8 +48,6 @@ public class ConnectionRaceConditionTest
       config.setInitializationFailTimeout(Long.MAX_VALUE);
       config.setConnectionTimeout(5000);
       config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
-
-      setSlf4jLogLevel(ConcurrentBag.class, Level.INFO);
 
       final AtomicReference<Exception> ref = new AtomicReference<>(null);
 
@@ -86,7 +79,6 @@ public class ConnectionRaceConditionTest
          threadPool.awaitTermination(30, TimeUnit.SECONDS);
 
          if (ref.get() != null) {
-            LoggerFactory.getLogger(ConnectionRaceConditionTest.class).error("Task failed", ref.get());
             fail("Task failed");
          }
       }
@@ -99,8 +91,5 @@ public class ConnectionRaceConditionTest
    public void after()
    {
       System.getProperties().remove("com.zaxxer.hikari.housekeeping.periodMs");
-
-      setSlf4jLogLevel(HikariPool.class, Level.WARN);
-      setSlf4jLogLevel(ConcurrentBag.class, Level.WARN);
    }
 }

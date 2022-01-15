@@ -16,30 +16,27 @@
 
 package com.zaxxer.hikari.pool;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.mocks.StubConnection;
+import com.zaxxer.hikari.util.UtilityElf;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
 import static com.zaxxer.hikari.pool.TestElf.getPool;
 import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
-import static com.zaxxer.hikari.pool.TestElf.setSlf4jLogLevel;
 import static com.zaxxer.hikari.util.ClockSource.currentTime;
 import static com.zaxxer.hikari.util.ClockSource.elapsedMillis;
 import static com.zaxxer.hikari.util.UtilityElf.quietlySleep;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
-import org.apache.logging.log4j.Level;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.mocks.StubConnection;
-import com.zaxxer.hikari.util.UtilityElf;
 
 /**
  * @author Brett Wooldridge
@@ -49,16 +46,12 @@ public class ShutdownTest
    @Before
    public void beforeTest()
    {
-      setSlf4jLogLevel(PoolBase.class, Level.DEBUG);
-      setSlf4jLogLevel(HikariPool.class, Level.DEBUG);
       StubConnection.count.set(0);
    }
 
    @After
    public void afterTest()
    {
-      setSlf4jLogLevel(PoolBase.class, Level.WARN);
-      setSlf4jLogLevel(HikariPool.class, Level.WARN);
       StubConnection.slowCreate = false;
    }
 

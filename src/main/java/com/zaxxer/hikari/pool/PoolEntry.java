@@ -17,8 +17,6 @@ package com.zaxxer.hikari.pool;
 
 import com.zaxxer.hikari.util.ConcurrentBag.IConcurrentBagEntry;
 import com.zaxxer.hikari.util.FastList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -36,7 +34,6 @@ import static com.zaxxer.hikari.util.ClockSource.currentTime;
  */
 final class PoolEntry implements IConcurrentBagEntry
 {
-   private static final Logger LOGGER = LoggerFactory.getLogger(PoolEntry.class);
    private static final AtomicIntegerFieldUpdater<PoolEntry> stateUpdater;
 
    Connection connection;
@@ -175,13 +172,13 @@ final class PoolEntry implements IConcurrentBagEntry
    Connection close()
    {
       var eol = endOfLife;
-      if (eol != null && !eol.isDone() && !eol.cancel(false)) {
-         LOGGER.warn("{} - maxLifeTime expiration task cancellation unexpectedly returned false for connection {}", getPoolName(), connection);
+      if (eol != null && !eol.isDone()) {
+         eol.cancel(false);
       }
 
       var ka = keepalive;
-      if (ka != null && !ka.isDone() && !ka.cancel(false)) {
-         LOGGER.warn("{} - keepalive task cancellation unexpectedly returned false for connection {}", getPoolName(), connection);
+      if (ka != null && !ka.isDone()) {
+         ka.cancel(false);
       }
 
       var con = connection;

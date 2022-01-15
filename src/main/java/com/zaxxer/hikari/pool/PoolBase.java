@@ -24,8 +24,6 @@ import com.zaxxer.hikari.util.DriverDataSource;
 import com.zaxxer.hikari.util.PropertyElf;
 import com.zaxxer.hikari.util.UtilityElf;
 import com.zaxxer.hikari.util.UtilityElf.DefaultThreadFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.management.ObjectName;
 import javax.naming.InitialContext;
@@ -50,8 +48,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 abstract class PoolBase
 {
-   private final Logger logger = LoggerFactory.getLogger(PoolBase.class);
-
    public final HikariConfig config;
    IMetricsTrackerDelegate metricsTracker;
 
@@ -129,18 +125,13 @@ abstract class PoolBase
    {
       if (connection != null) {
          try {
-            logger.debug("{} - Closing connection {}: {}", poolName, connection, closureReason);
-
             // continue with the close even if setNetworkTimeout() throws
             try (connection) {
                setNetworkTimeout(connection, SECONDS.toMillis(15));
             } catch (SQLException e) {
                // ignore
             }
-         }
-         catch (Exception e) {
-            logger.debug("{} - Closing connection {} failed", poolName, connection, e);
-         }
+         } catch (Exception ignored) {}
       }
    }
 
@@ -176,8 +167,6 @@ abstract class PoolBase
       }
       catch (Exception e) {
          lastConnectionFailure.set(e);
-         logger.warn("{} - Failed to validate connection {} ({}). Possibly consider using a shorter maxLifetime value.",
-                     poolName, connection, e.getMessage());
          return true;
       }
    }
@@ -234,10 +223,6 @@ abstract class PoolBase
          connection.setSchema(schema);
          resetBits |= DIRTY_BIT_SCHEMA;
       }
-
-      if (resetBits != 0 && logger.isDebugEnabled()) {
-         logger.debug("{} - Reset ({}) on connection {}", poolName, stringFromResetBits(resetBits), connection);
-      }
    }
 
    void shutdownNetworkTimeoutExecutor()
@@ -286,18 +271,13 @@ abstract class PoolBase
             if (!mBeanServer.isRegistered(beanConfigName)) {
                mBeanServer.registerMBean(config, beanConfigName);
                mBeanServer.registerMBean(hikariPool, beanPoolName);
-            } else {
-               logger.error("{} - JMX name ({}) is already registered.", poolName, poolName);
             }
          }
          else if (mBeanServer.isRegistered(beanConfigName)) {
             mBeanServer.unregisterMBean(beanConfigName);
             mBeanServer.unregisterMBean(beanPoolName);
          }
-      }
-      catch (Exception e) {
-         logger.warn("{} - Failed to {} management beans.", poolName, (register ? "register" : "unregister"), e);
-      }
+      } catch (Exception ignored) {}
    }
 
    // ***********************************************************************
@@ -369,9 +349,7 @@ abstract class PoolBase
          if (connection != null) {
             quietlyCloseConnection(connection, "(Failed to create/setup connection)");
          }
-         else if (getLastConnectionFailure() == null) {
-            logger.debug("{} - Failed to create/setup connection: {}", poolName, e.getMessage());
-         }
+         else getLastConnectionFailure();
 
          lastConnectionFailure.set(e);
          throw e;
@@ -454,17 +432,11 @@ abstract class PoolBase
     */
    private void checkValidationSupport(final Connection connection) throws SQLException
    {
-      try {
-         if (isUseJdbc4Validation) {
-            connection.isValid(1);
-         }
-         else {
-            executeSql(connection, config.getConnectionTestQuery(), false);
-         }
+      if (isUseJdbc4Validation) {
+         connection.isValid(1);
       }
-      catch (Exception | AbstractMethodError e) {
-         logger.error("{} - Failed to execute{} connection test query ({}).", poolName, (isUseJdbc4Validation ? " isValid() for connection, configure" : ""), e.getMessage());
-         throw e;
+      else {
+         executeSql(connection, config.getConnectionTestQuery(), false);
       }
    }
 
@@ -483,7 +455,6 @@ abstract class PoolBase
          }
       }
       catch (SQLException e) {
-         logger.warn("{} - Default transaction isolation level detection failed ({}).", poolName, e.getMessage());
          if (e.getSQLState() != null && !e.getSQLState().startsWith("08")) {
             throw e;
          }
@@ -506,7 +477,6 @@ abstract class PoolBase
          catch (Exception e) {
             if (isQueryTimeoutSupported == UNINITIALIZED) {
                isQueryTimeoutSupported = FALSE;
-               logger.info("{} - Failed to set query timeout for statement. ({})", poolName, e.getMessage());
             }
          }
       }
@@ -532,14 +502,6 @@ abstract class PoolBase
          catch (Exception | AbstractMethodError e) {
             if (isNetworkTimeoutSupported == UNINITIALIZED) {
                isNetworkTimeoutSupported = FALSE;
-
-               logger.info("{} - Driver does not support get/set network timeout for connections. ({})", poolName, e.getMessage());
-               if (validationTimeout < SECONDS.toMillis(1)) {
-                  logger.warn("{} - A validationTimeout of less than 1 second cannot be honored on drivers without setNetworkTimeout() support.", poolName);
-               }
-               else if (validationTimeout % SECONDS.toMillis(1) != 0) {
-                  logger.warn("{} - A validationTimeout with fractional second granularity cannot be honored on drivers without setNetworkTimeout() support.", poolName);
-               }
             }
          }
       }
@@ -617,10 +579,7 @@ abstract class PoolBase
       if (connectionTimeout != Integer.MAX_VALUE) {
          try {
             dataSource.setLoginTimeout(Math.max(1, (int) MILLISECONDS.toSeconds(500L + connectionTimeout)));
-         }
-         catch (Exception e) {
-            logger.info("{} - Failed to set login timeout for data source. ({})", poolName, e.getMessage());
-         }
+         } catch (Exception ignored) {}
       }
    }
 
@@ -674,10 +633,7 @@ abstract class PoolBase
       {
          try {
             command.run();
-         }
-         catch (Exception t) {
-            LoggerFactory.getLogger(PoolBase.class).debug("Failed to execute: {}", command, t);
-         }
+         } catch (Exception ignored) {}
       }
    }
 

@@ -16,20 +16,9 @@
 
 package com.zaxxer.hikari.pool;
 
-import static com.zaxxer.hikari.pool.TestElf.newHikariConfig;
-import static com.zaxxer.hikari.pool.TestElf.getPool;
-import static com.zaxxer.hikari.pool.TestElf.setConfigUnitTest;
-import static com.zaxxer.hikari.pool.TestElf.setSlf4jLogLevel;
-import static com.zaxxer.hikari.pool.TestElf.setSlf4jTargetStream;
-import static com.zaxxer.hikari.util.UtilityElf.createInstance;
-import static com.zaxxer.hikari.util.UtilityElf.getTransactionIsolation;
-import static com.zaxxer.hikari.util.UtilityElf.quietlySleep;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -39,11 +28,10 @@ import java.sql.SQLException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.Level;
-import org.junit.Test;
-
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import static com.zaxxer.hikari.pool.TestElf.*;
+import static com.zaxxer.hikari.util.UtilityElf.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.*;
 
 /**
  * @author Brett Wooldridge
@@ -100,7 +88,6 @@ public class MiscTest
    {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       try (PrintStream ps = new PrintStream(baos, true)) {
-         setSlf4jTargetStream(Class.forName("com.zaxxer.hikari.pool.ProxyLeakTask"), ps);
          setConfigUnitTest(true);
 
          HikariConfig config = newHikariConfig();
@@ -112,7 +99,6 @@ public class MiscTest
          config.setDataSourceClassName("com.zaxxer.hikari.mocks.StubDataSource");
 
          try (HikariDataSource ds = new HikariDataSource(config)) {
-            setSlf4jLogLevel(HikariPool.class, Level.DEBUG);
             getPool(ds).logPoolState();
 
             try (Connection connection = ds.getConnection()) {
@@ -128,7 +114,6 @@ public class MiscTest
          finally
          {
             setConfigUnitTest(false);
-            setSlf4jLogLevel(HikariPool.class, Level.INFO);
          }
       }
    }

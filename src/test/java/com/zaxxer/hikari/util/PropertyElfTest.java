@@ -12,7 +12,7 @@ import static org.junit.Assert.fail;
 public class PropertyElfTest
 {
    @Test
-   public void setTargetFromProperties() throws Exception
+   public void setTargetFromProperties()
    {
       Properties properties = new Properties();
       properties.setProperty("string", "aString");
@@ -27,7 +27,7 @@ public class PropertyElfTest
    }
 
    @Test
-   public void setTargetFromPropertiesNotAClass() throws Exception
+   public void setTargetFromPropertiesNotAClass()
    {
       Properties properties = new Properties();
       properties.setProperty("string", "aString");

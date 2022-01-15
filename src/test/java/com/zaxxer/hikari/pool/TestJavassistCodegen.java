@@ -16,6 +16,7 @@ import java.sql.Statement;
 import java.util.stream.Stream;
 
 public class TestJavassistCodegen {
+
    @Test
    public void testCodegen() throws Exception {
       String tmp = System.getProperty("java.io.tmpdir");
